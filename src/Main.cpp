@@ -202,7 +202,7 @@ int main(int argc, char** argv)
 	
 	
 	/** Argv[1] normally is "/dev/ttyUSB0" driver description file on Linux system **/
-	if (imar.init_serial(argv[1]) != ERROR)
+	if (imar.init_serial(argv[1], 57600) != ERROR)
 	{
 	    std::cout<<"OK\n";
 	    
@@ -259,6 +259,7 @@ int main(int argc, char** argv)
 		    else if (imar.cbIsSynchronized()) 
 		    {
 			imar.cbReadValues();
+			imar.cbPrintValues();
 		    }
 		}
 		else

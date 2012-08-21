@@ -1,11 +1,14 @@
 <package>
   <description brief="Driver library for the IMAR IMU iVRU-BB">
-  This is the serial RS-232 library package for the IMAR iVRU-BB Inertial Measurement System (IMU)
+  This is the serial RS-232 library package for the IMAR iVRU-BB Inertial Measurement Unit (IMU)
   </description>
   <author>Javier Hidalgo Carrio/javier.hidalgo_carrio@dfki.de</author>
   <license></license>
   <url>http://</url>
   <logo>http://</logo>
+  
+  <rosdep name="eigen3" />
+  
   <!--
    To add any dependencies use the depend tag
   <depend package="dummy-dependency-0" />
