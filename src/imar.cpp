@@ -39,7 +39,6 @@ namespace imar
     
     iVRU_BB::iVRU_BB()
     {
-	
 	this->fd = 0;
 	
 	/** Init the circular Buffer **/
@@ -47,6 +46,8 @@ namespace imar
 	myBuffer.size = sizeof(myBuffer.data);
 	myBuffer.write = 0;
 	myBuffer.read = 0;
+	
+	cbAccX.set_capacity(FFT_WINDOWS_SIZE);
 
     }
     
@@ -92,54 +93,71 @@ namespace imar
 	{
 	    case 50:
 		speed = B50;
+		break;
 		
 	    case 75:
 		speed = B75;
+		break;
 		
 	    case 110:
 		speed = B110;
+		break;
 		
 	    case 134:
 		speed = B134;
+		break;
 		
 	    case 150:
 		speed = B150;
+		break;
 		
 	    case 200:
 		speed = B200;
+		break;
 		
 	    case 300:
 		speed = B300;
+		break;
 		
 	    case 600:
 		speed = B600;
+		break;
 		
 	    case 1200:
 		speed = B1200;
+		break;
 		
 	    case 1800:
 		speed = B1800;
+		break;
 		
 	    case 4800:
 		speed = B4800;
+		break;
 		
 	    case 9600:
 		speed = B9600;
+		break;
 		
 	    case 19200:
 		speed = B19200;
+		break;
 		
 	    case 38400:
 		speed = B38400;
+		break;
 		
 	    case 57600:
 		speed = B57600;
+		break;
 		
 	    case 115200:
 		speed = B115200;
+		break;
 		
 	    case 230400:
 		speed = B230400;
+		break;
 		
 	    default:
 		return ERROR;
@@ -165,6 +183,7 @@ namespace imar
 		/** Get the current options for the port **/
 		tcgetattr(fd,&PortSettings);
 		
+// 		std::cout<<"bauds is: "<<bauds<<"\n";
 		speed =  getBaudsRate(bauds);
 		
 		/** Set the baud rates to 57600 **/
@@ -345,22 +364,22 @@ namespace imar
 			    
 		if (myBuffer.data[sync] == SYNC_WORD)
 		{
-// 		    std::cout<<"FOUND at ("<<std::dec<<sync<<")";
-// 		    printf("%X \n", myBuffer.data[sync]);
+/*		    std::cout<<"FOUND at ("<<std::dec<<sync<<")";
+		    printf("%X \n", myBuffer.data[sync]);
 		    
-// 		    std::cout<<"Counter("<<std::dec<<(sync+1)% myBuffer.size<<")";
-// 		    printf("%X \n", myBuffer.data[(sync+1)% myBuffer.size]);
+		    std::cout<<"Counter("<<std::dec<<(sync+1)% myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+1)% myBuffer.size]);*/
 		    
 		    myBuffer.counter = myBuffer.data[(sync+1)% myBuffer.size];
-// 		    std::cout<<"Counter+1: ";
-// 		    printf("%X \n",  myBuffer.counter+1);
+/*		    std::cout<<"Counter+1: ";
+		    printf("%X \n",  myBuffer.counter+1);
 		    
-// 		    std::cout<<"Next Synchronize at ("<<std::dec<<(sync+PKG_SIZE)%myBuffer.size<<")";
-// 		    printf("%X \n", myBuffer.data[(sync+PKG_SIZE)%myBuffer.size]);
+		    std::cout<<"Next Synchronize at ("<<std::dec<<(sync+PKG_SIZE)%myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+PKG_SIZE)%myBuffer.size]);
 		    
-// 		    std::cout<<"Counter+1("<<std::dec<<(sync+PKG_SIZE+1)%myBuffer.size<<")";
-// 		    printf("%X \n", myBuffer.data[(sync+PKG_SIZE+1)%myBuffer.size]);
-// 		    printf("It should be: %X \n", myBuffer.counter + 1);
+		    std::cout<<"Counter+1("<<std::dec<<(sync+PKG_SIZE+1)%myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+PKG_SIZE+1)%myBuffer.size]);
+		    printf("It should be: %X \n", myBuffer.counter + 1);*/
 		    
 		    if ((myBuffer.data[(sync+PKG_SIZE+1)%myBuffer.size]) == myBuffer.counter + 1)
 		    {
@@ -555,13 +574,34 @@ namespace imar
 	    val.i = (number[0] << 24 )|(0x00FF0000 & number[1] << 16)|(0x0000FF00 & number[2] << 8)|(0x000000FF & number[3]);
 	    myIMU.euler[2] = D2R * val.f;
 	    
+	    
+	    /** Read the time field **/
+	    number[0] = myBuffer.data[(myBuffer.read+45)%myBuffer.size];
+	    number[1] = myBuffer.data[(myBuffer.read+44)%myBuffer.size];
+	    
+	    number[2] = myBuffer.data[(myBuffer.read+47)%myBuffer.size];
+	    number[3] = myBuffer.data[(myBuffer.read+46)%myBuffer.size];
+	    
+// 	    printf("%X %X %X %X\n", number[0], number[1], number[2], number[3]);
+	    
+	    val.i = (number[0] << 24 )|(0x00FF0000 & number[1] << 16)|(0x0000FF00 & number[2] << 8)|(0x000000FF & number[3]);
+	    myIMU.microseconds = val.i;
+	    
+	    
+	    /** Push the accelerometers readings to the FFT buffer **/
+	    cbAccX.push_back(myIMU.acc[0]);
+	    cbAccY.push_back(myIMU.acc[1]);
+	    cbAccZ.push_back(myIMU.acc[2]);
+
+
+	    
 // 	    val.i = 0x3f9d70a4;
 // 	    val.i = (0x3f << 24 )|(0x00FF0000 & 0x9d << 16)|(0x0000FF00 & 0x70 << 8)|(0x000000FF & 0xa4);
 // 	    printf("Union %f\n", val.f);
 	    	    
 	    myBuffer.read = (myBuffer.read+PKG_SIZE)%myBuffer.size;
 // 	    printf("Next->SyncWord (%d): %X\n", (myBuffer.read)%myBuffer.size, myBuffer.data[(myBuffer.read)%myBuffer.size]);
-	    
+	  
 	    
 	    return OK;
 	}
@@ -570,10 +610,13 @@ namespace imar
 	    return ERROR;
 	}
     }
-    
+
     void iVRU_BB::cbPrintValues()
     {
 	/** Inertial Values **/
+	std::cout<<"Time: "<<myIMU.microseconds<<"\n";
+	printf("Counter: %X\n", myIMU.counter);
+	std::cout<<"Length: "<<myIMU.length<<"\n";
 	std::cout<<"AccX: "<<myIMU.acc[0]<<"AccY: "<<myIMU.acc[1]<<"AccZ: "<<myIMU.acc[2]<<"\n";
 	std::cout<<"GyroX: "<<myIMU.gyro[0]<<"GyroY: "<<myIMU.gyro[1]<<"GyroZ: "<<myIMU.gyro[2]<<"\n";
 	std::cout<<"Roll: "<<myIMU.euler[0]<<"Pitch: "<<myIMU.euler[1]<<"Yaw: "<<myIMU.euler[2]<<"\n";
@@ -617,6 +660,82 @@ namespace imar
     int iVRU_BB::getPacketCounter()
     {
 	return myIMU.counter;
+
+    }
+    
+    void iVRU_BB::cbCalculateAccIntegration(const float omega)
+    {
+	Eigen::FFT<float> fft;
+	std::vector<float> timevec;
+	std::vector<float> timevecVel;
+	std::vector<float> timevecPos;
+	std::vector<std::complex<float> > freqvecVel;
+	std::vector<std::complex<float> > freqvecPos;
+	
+	timevec.resize(FFT_WINDOWS_SIZE);
+	timevecVel.resize(FFT_WINDOWS_SIZE);
+	timevecPos.resize(FFT_WINDOWS_SIZE);
+	freqvecPos.resize(FFT_WINDOWS_SIZE);
+	freqvecVel.resize(FFT_WINDOWS_SIZE);
+	
+// 	std::cout<<"cbAccX.size(): "<<cbAccX.size()<<"\n";
+	
+	if (cbAccX.size() == FFT_WINDOWS_SIZE)
+	{
+	    /** Get the Acceleration **/
+	    for (int i=0; i<FFT_WINDOWS_SIZE; ++i)
+	    {
+		timevec[i] = cbAccX[i];
+// 		std::cout<<"Acceleration["<<i<<"]: "<<timevec[i]<<"\n";
+	    }
+	    
+	    /** Remove the first elements from the buffer **/
+	    cbAccX.pop_front();
+	    
+	    fft.SetFlag(fft.Unscaled);
+	    
+	    /** Compute the FFT **/	
+	    fft.fwd(freqvecVel,timevec);
+	    fft.fwd(freqvecPos,timevec);
+	    
+	
+	    for (int i=0; i<FFT_WINDOWS_SIZE; ++i)
+	    {
+// 		std::cout<<"Freq["<<i<<"]: "<<freqvecVel[i]<<"\n";
+		
+		/** Convert Acc to Displacement **/
+		freqvecPos[i] = freqvecPos[i] / (std::complex<float>) pow(omega,2);
+	    
+		/** Convert Acc to Velocity **/
+		freqvecVel[i] = freqvecVel[i] / omega;
+	    }
+	    
+	    /** Calculate the Inverse FFT **/
+ 	    fft.inv(timevecPos,freqvecPos);
+ 	    fft.inv(timevecVel,freqvecVel);
+// 	    
+	    
+	    /** Fill the Vel and Displacement **/
+ 	    velocity[0] = timevecVel[0];
+   	    displacement[0] = timevecPos[0];
+	    
+	    std::cout<<"Velocity: "<<timevecVel[0]<<"\n";
+	    std::cout<<"Position: "<<timevecPos[0]<<"\n";
+	}
+	
+// 	std::cout<<"ENDS\n";
+	
+	return;
+    }
+    
+    Eigen::Matrix< double, 3 , 1  > iVRU_BB::getPosition()
+    {
+	return displacement;
+    }
+    
+    Eigen::Matrix< double, 3 , 1  > iVRU_BB::getVelocity()
+    {
+	return velocity;
 
     }
 

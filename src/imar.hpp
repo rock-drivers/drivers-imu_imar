@@ -7,6 +7,8 @@
 
 #include <iostream>
 #include <Eigen/Geometry> /**< Eigen data type for Matrix, Quaternion, etc... */
+#include <unsupported/Eigen/FFT> /** FFT for the Accelerometers integration **/
+#include <boost/circular_buffer.hpp> /** Boost library circula buffer **/
 
 
 namespace imar
@@ -23,6 +25,10 @@ namespace imar
     
     #ifndef PKG_SIZE
     #define PKG_SIZE 50 /** Size of the package coming from the IMU **/
+    #endif
+    
+    #ifndef FFT_WINDOWS_SIZE
+    #define FFT_WINDOWS_SIZE 64 /** Size for the FFT windows size (better power od two) **/
     #endif
     
     #ifndef SYNC_WORD
@@ -62,6 +68,7 @@ namespace imar
     /** Raw IMU data **/
     typedef struct {
 	unsigned char counter; /** package counter **/
+	unsigned int microseconds; /** microseconds between last trigger **/
 	int length; /** Number of the information bytes **/
 // 	unsigned char ibit[8]; /** Init Build in Test (IBIT) information check info **/
 	float acc[NUMAXIS]; /** Accelerometers values **/
@@ -81,6 +88,12 @@ namespace imar
 	    int fd;
 	    CircularBuffer myBuffer;
 	    ImuData myIMU;
+	    boost::circular_buffer<float> cbAccX;
+	    boost::circular_buffer<float> cbAccY;
+	    boost::circular_buffer<float> cbAccZ;
+	    Eigen::Matrix <double,NUMAXIS,1> velocity;
+	    Eigen::Matrix <double,NUMAXIS,1> displacement;
+	    int aux;
 	    
 	public: 
 	    
@@ -346,6 +359,13 @@ namespace imar
 	    *
 	    */
 	    Eigen::Quaternion <double> getAttitude();
+	    
+	    
+	    void cbCalculateAccIntegration (const float omega);
+	    
+	    Eigen::Matrix <double,NUMAXIS,1> getVelocity();
+	    
+	    Eigen::Matrix <double,NUMAXIS,1> getPosition();
 	    
 	    
 	    
