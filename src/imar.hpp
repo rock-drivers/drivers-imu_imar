@@ -50,6 +50,8 @@ namespace imar
     #ifndef R2D
     #define R2D 180.00/PI /** Convert radian to degree **/
     #endif
+    
+    #define POLY 0x8408
 	
     typedef struct {
 	unsigned char data[2];
@@ -93,7 +95,6 @@ namespace imar
 	    boost::circular_buffer<float> cbAccZ;
 	    Eigen::Matrix <double,NUMAXIS,1> velocity;
 	    Eigen::Matrix <double,NUMAXIS,1> displacement;
-	    int aux;
 	    
 	public: 
 	    
@@ -278,11 +279,12 @@ namespace imar
 	    * @author Javier Hidalgo Carrio.
 	    *
 	    * @param[out] *pckg pointer to buffer.
+	    * @param[in] len size of the buffer
 	    * 
 	    * @return OK if everything is good, ERROR in other cases.
 	    *
 	    */
-	    int cbReadPckg(unsigned char *pckg);
+	    int cbCopyPckg(unsigned char *pckg, int len);
 	    
 	    /**
 	    * @brief It reads a IMU packages
@@ -367,7 +369,11 @@ namespace imar
 	    
 	    Eigen::Matrix <double,NUMAXIS,1> getPosition();
 	    
+	    unsigned short crc16(unsigned char *data_p, int length);
 	    
+	    unsigned int Crc16_0(unsigned char const * pByte, unsigned Size);
+	    
+	    void cbReset();
 	    
     };
 
