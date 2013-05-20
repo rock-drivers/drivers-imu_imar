@@ -29,6 +29,15 @@
 #include <stdint.h>
 #include "imar.hpp"
 
+#ifndef D2R
+#define D2R M_PI/180.00 /** Convert degree to radian **/
+#endif
+
+#ifndef R2D
+#define R2D 180.00/M_PI /** Convert radian to degree **/
+#endif
+
+
 namespace imar
 {
     union IntFloat
@@ -47,7 +56,7 @@ namespace imar
 	myBuffer.write = 0;
 	myBuffer.read = 0;
 	
-	cbAccX.set_capacity(FFT_WINDOWS_SIZE);
+	cbAccX.set_capacity(imar::FFT_WINDOWS_SIZE);
 
     }
     
@@ -59,25 +68,25 @@ namespace imar
     /**
     * @brief This method opens a serial port
     */
-    int iVRU_BB::open_port(const char* name)
+    bool iVRU_BB::open_port(const char* name)
     {
 
 	this->fd = open (name, O_RDWR | O_NOCTTY |  O_NDELAY);
-	if (this->fd == ERROR)
+	if (this->fd == -1)
 	{
 		/*
 		*  Could not open the port.
 		*/
 
 		perror("open_port: Unable to open ");
-		return ERROR;
+		return false;
 	}
 	else
 	{
 		 fcntl(this->fd, F_SETFL, FNDELAY);
 		 std::cout<<"IMU Com Port iVRU_BB descriptor is: "<<this->fd<<"\n";
 		 
-		 return OK;
+		 return true;
 	}	
 	
     }
@@ -160,7 +169,7 @@ namespace imar
 		break;
 		
 	    default:
-		return ERROR;
+		return false;
 	}
 	
 	return speed;
@@ -169,7 +178,7 @@ namespace imar
     /**
     * @brief This method opens and configures a serial port
     */
-    int iVRU_BB::init_serial(const char* name, const int bauds)
+    bool iVRU_BB::init_serial(const char* name, const int bauds)
     {
 	/****** variables ******/
 	
@@ -177,7 +186,7 @@ namespace imar
 	speed_t speed;
 
 	
-	if (open_port(name) != ERROR)
+	if (open_port(name))
 	{
 
 		/** Get the current options for the port **/
@@ -224,47 +233,47 @@ namespace imar
 
 		tcsetattr(fd, TCSANOW, &PortSettings);
 		
-		return OK;
+		return true;
 	}
 	
-	return ERROR;
+	return false;
     }
 
 
     /**
     * @brief This method write values in the serial port
     */
-    int iVRU_BB::write_serial(char* command, int nbytes)
+    bool iVRU_BB::write_serial(char* command, int nbytes)
     {
 	int n = 0;	
 	
-	if (fd != ERROR)
+	if (fd != -1)
 	{
 		//printf ("In write function: %s tamanio: %d", command, nbytes);
 		n = write(fd, command, nbytes);
 		if (n<0)
 		{
 			fputs("write()  failed!\n", stderr);
-			return ERROR;
+			return false;
 		}
 		else
 		{
-			return OK;
+			return true;
 		}	
 	}
-	return ERROR;
+	return false;
     }
     
     /**
     * @brief Function to read values from a serial port connection.
     */
-    int iVRU_BB::read_serial(unsigned char* bufferpr, int nbytes)
+    bool iVRU_BB::read_serial(unsigned char* bufferpr, int nbytes)
     {
 	
 	int n = 0;
 // 	std::cout<<"Buffer size: "<<std::dec<<nbytes<<"\n";
 	
-	if (this->fd != ERROR)
+	if (this->fd != -1)
 	{
 		if ((n=read (this->fd, (unsigned char *) bufferpr, nbytes)) > 0)
 		{
@@ -272,22 +281,22 @@ namespace imar
 		    return n;
 		}
 	}
-	return ERROR;
+	return false;
     }
 
     
     /**
     * @brief Function to close an open serial port connection.
     */
-    int iVRU_BB::close_port()
+    bool iVRU_BB::close_port()
     {
 	
-	if (fd != ERROR)
+	if (fd != -1)
 	{
-		return close (fd); /**< Returns OK if no errors*/
+		return close (fd); /** Returns OK if no errors*/
 		
 	}
-		return ERROR;
+		return false;
     }
 
     /**
@@ -325,7 +334,7 @@ namespace imar
     /**
     * @brief Returns if the driver is Synchronized
     */
-    int iVRU_BB::cbIsSynchronized()
+    bool iVRU_BB::cbIsSynchronized()
     {
 	return myBuffer.synchronized;
     }
@@ -344,7 +353,7 @@ namespace imar
 	}
     }
     
-    int iVRU_BB::cbSynchronize ()
+    bool iVRU_BB::cbSynchronize ()
     {
 	int sync = myBuffer.read;
 	UINT16 length;
@@ -361,8 +370,8 @@ namespace imar
 // 		std::cout<< "sync("<<sync<<") write("<<myBuffer.write<<") read("<<myBuffer.read<<")\n";
 		
 		sync = (sync + 1) % myBuffer.size;
-			    
-		if (myBuffer.data[sync] == SYNC_WORD)
+			
+		if (myBuffer.data[sync] == imar::SYNC_WORD)
 		{
 /*		    std::cout<<"FOUND at ("<<std::dec<<sync<<")";
 		    printf("%X \n", myBuffer.data[sync]);
@@ -374,20 +383,20 @@ namespace imar
 /*		    std::cout<<"Counter+1: ";
 		    printf("%X \n",  myBuffer.counter+1);
 		    
-		    std::cout<<"Next Synchronize at ("<<std::dec<<(sync+PKG_SIZE)%myBuffer.size<<")";
-		    printf("%X \n", myBuffer.data[(sync+PKG_SIZE)%myBuffer.size]);
+		    std::cout<<"Next Synchronize at ("<<std::dec<<(sync+imar::PKG_SIZE)%myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+imar::PKG_SIZE)%myBuffer.size]);
 		    
-		    std::cout<<"Counter+1("<<std::dec<<(sync+PKG_SIZE+1)%myBuffer.size<<")";
-		    printf("%X \n", myBuffer.data[(sync+PKG_SIZE+1)%myBuffer.size]);
+		    std::cout<<"Counter+1("<<std::dec<<(sync+imar::PKG_SIZE+1)%myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+imar::PKG_SIZE+1)%myBuffer.size]);
 		    printf("It should be: %X \n", myBuffer.counter + 1);*/
 		    
-		    if ((myBuffer.data[(sync+PKG_SIZE+1)%myBuffer.size]) == myBuffer.counter + 1)
+		    if ((myBuffer.data[(sync+imar::PKG_SIZE+1)%myBuffer.size]) == myBuffer.counter + 1)
 		    {
 			myBuffer.synchronized = true;
 			
 			/** Jump one package ahead to be fully sync**/
 			/** The app must read new values again **/
-			myBuffer.read = (sync+PKG_SIZE)%myBuffer.size;
+			myBuffer.read = (sync+imar::PKG_SIZE)%myBuffer.size;
 			
 			length.data[1] = myBuffer.data[(sync+2)%myBuffer.size];
 			length.data[0] = myBuffer.data[(sync+3)%myBuffer.size];
@@ -403,11 +412,11 @@ namespace imar
 	
 	if (myBuffer.synchronized == true)
 	{
-	    return OK;
+	    return true;
 	}
 	else
 	{	
-	    return ERROR;
+	    return false;
 	}
     }
     
@@ -430,17 +439,17 @@ namespace imar
 
     }
 
-    int iVRU_BB::cbCopyPckg(unsigned char *pckg, int len)
+    bool iVRU_BB::cbCopyPckg(unsigned char *pckg, int len)
     {
 	register int i;
 	int read;
 	
 	if (pckg == NULL)
-	    return ERROR;
+	    return false;
 	else
 	{
 	    if ((myBuffer.synchronized == false))
-		return ERROR;
+		return false;
 	}
 	
 	read = myBuffer.read;
@@ -461,12 +470,12 @@ namespace imar
 //  	std::cout<<"END Pckg("<<(read) % myBuffer.size<<")"<<"i="<<i<<"\n";
 //   	printf("%X \n", myBuffer.data[(read) % myBuffer.size]);
 	if (i == len)
-	    return OK;
+	    return true;
 	else
-	    return ERROR;
+	    return false;
     }
     
-    int iVRU_BB::cbReadValues()
+    bool iVRU_BB::cbReadValues()
     {
 	unsigned char number[4];
 	union IntFloat val;
@@ -604,20 +613,20 @@ namespace imar
 // 	    val.i = (0x3f << 24 )|(0x00FF0000 & 0x9d << 16)|(0x0000FF00 & 0x70 << 8)|(0x000000FF & 0xa4);
 // 	    printf("Union %f\n", val.f);
 	    	    
-	    myBuffer.read = (myBuffer.read+PKG_SIZE)%myBuffer.size;
+	    myBuffer.read = (myBuffer.read+imar::PKG_SIZE)%myBuffer.size;
 // 	    printf("Next->SyncWord (%d): %X\n", (myBuffer.read)%myBuffer.size, myBuffer.data[(myBuffer.read)%myBuffer.size]);
 	    
 	    /** Check if the buffer is Synchronize **/
-	    if (myBuffer.data[myBuffer.read] !=  SYNC_WORD)
+	    if (myBuffer.data[myBuffer.read] !=  imar::SYNC_WORD)
 		myBuffer.synchronized = false;
 	    
 	  
 	    
-	    return OK;
+	    return true;
 	}
 	else
 	{
-	    return ERROR;
+	    return false;
 	}
     }
 
@@ -632,9 +641,9 @@ namespace imar
 	std::cout<<"Roll: "<<myIMU.euler[0]<<" Pitch: "<<myIMU.euler[1]<<" Yaw: "<<myIMU.euler[2]<<"\n";
     }
     
-    Eigen::Matrix< double, NUMAXIS , 1  > iVRU_BB::getAccelerometers()
+    Eigen::Matrix< double, imar::NUMAXIS , 1  > iVRU_BB::getAccelerometers()
     {
-	Eigen::Matrix< double, NUMAXIS , 1  > acc;
+	Eigen::Matrix< double, imar::NUMAXIS , 1  > acc;
 	
 	acc[0] = myIMU.acc[0];
 	acc[1] = myIMU.acc[1];
@@ -644,9 +653,9 @@ namespace imar
 
     }
 
-    Eigen::Matrix< double, NUMAXIS , 1  > iVRU_BB::getGyroscopes()
+    Eigen::Matrix< double, imar::NUMAXIS , 1  > iVRU_BB::getGyroscopes()
     {
-	Eigen::Matrix< double, NUMAXIS , 1  > gyro;
+	Eigen::Matrix< double, imar::NUMAXIS , 1  > gyro;
 	
 	gyro[0] = myIMU.gyro[0];
 	gyro[1] = myIMU.gyro[1];
@@ -682,18 +691,18 @@ namespace imar
 	std::vector<std::complex<float> > freqvecVel;
 	std::vector<std::complex<float> > freqvecPos;
 	
-	timevec.resize(FFT_WINDOWS_SIZE);
-	timevecVel.resize(FFT_WINDOWS_SIZE);
-	timevecPos.resize(FFT_WINDOWS_SIZE);
-	freqvecPos.resize(FFT_WINDOWS_SIZE);
-	freqvecVel.resize(FFT_WINDOWS_SIZE);
+	timevec.resize(imar::FFT_WINDOWS_SIZE);
+	timevecVel.resize(imar::FFT_WINDOWS_SIZE);
+	timevecPos.resize(imar::FFT_WINDOWS_SIZE);
+	freqvecPos.resize(imar::FFT_WINDOWS_SIZE);
+	freqvecVel.resize(imar::FFT_WINDOWS_SIZE);
 	
 // 	std::cout<<"cbAccX.size(): "<<cbAccX.size()<<"\n";
 	
-	if (cbAccX.size() == FFT_WINDOWS_SIZE)
+	if (cbAccX.size() == imar::FFT_WINDOWS_SIZE)
 	{
 	    /** Get the Acceleration **/
-	    for (int i=0; i<FFT_WINDOWS_SIZE; ++i)
+	    for (int i=0; i<imar::FFT_WINDOWS_SIZE; ++i)
 	    {
 		timevec[i] = cbAccX[i];
 // 		std::cout<<"Acceleration["<<i<<"]: "<<timevec[i]<<"\n";
@@ -709,7 +718,7 @@ namespace imar
 	    fft.fwd(freqvecPos,timevec);
 	    
 	
-	    for (int i=0; i<FFT_WINDOWS_SIZE; ++i)
+	    for (int i=0; i<imar::FFT_WINDOWS_SIZE; ++i)
 	    {
 // 		std::cout<<"Freq["<<i<<"]: "<<freqvecVel[i]<<"\n";
 		
@@ -765,7 +774,7 @@ namespace imar
 		if (crc & 0x0001)
 		{
 		    // if rightmost (least significant) bit is set
-		    crc = (crc >> 1) ^ POLY;
+		    crc = (crc >> 1) ^ imar::POLY;
 		    
 		}
 		else

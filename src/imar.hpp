@@ -13,46 +13,18 @@
 
 namespace imar
 {
-    
-    /** General defines **/
-    #ifndef OK
-    #define OK	0 /** Integer value in order to return when everything is all right. */
-    #endif
-    
-    #ifndef ERROR
-    #define ERROR -1 /** Integer value in order to return when an error occur. */
-    #endif
-    
-    #ifndef PKG_SIZE
-    #define PKG_SIZE 50 /** Size of the package coming from the IMU **/
-    #endif
-    
-    #ifndef FFT_WINDOWS_SIZE
-    #define FFT_WINDOWS_SIZE 64 /** Size for the FFT windows size (better power od two) **/
-    #endif
-    
-    #ifndef SYNC_WORD
-    #define SYNC_WORD 0x7E /** Synchronization byte of the package (start of a package) **/
-    #endif
-    
-    #ifndef NUMAXIS
-    #define NUMAXIS 3 /** NUmber of axis of the IMU **/
-    #endif
-    
-    #ifndef PI
-    #define PI 3.141592653589793238462643383279502884197169399375105820974944592307816406286 /**< Pi Number */
-    #endif
-  
-    #ifndef D2R
-    #define D2R PI/180.00 /** Convert degree to radian **/
-    #endif
-    
-    #ifndef R2D
-    #define R2D 180.00/PI /** Convert radian to degree **/
-    #endif
-    
-    #define POLY 0x8408
-	
+   
+    enum CONSTS {
+        NUMAXIS = 3, /** NUmber of axis of the IMU **/
+        PKG_SIZE = 50, /** Size of the package coming from the IMU **/
+        FFT_WINDOWS_SIZE = 64 /** Size for the FFT windows size (better power od two) **/
+    };
+
+    enum DATAGRAN_CONST {
+        SYNC_WORD = 0x7E, /** Synchronization byte of the package (start of a package) **/
+        POLY = 0x8408
+    };
+
     typedef struct {
 	unsigned char data[2];
     }UINT16; /** 16 bits */
@@ -64,7 +36,7 @@ namespace imar
 	int size;   /** maximum number of elements*/
 	int read;  /** index of read element */
 	int write;    /** index at which to write new element*/
-	unsigned char data[(2*PKG_SIZE) + 1];  /* vector of elements */
+	unsigned char data[(2*imar::PKG_SIZE) + 1];  /* vector of elements */
     } CircularBuffer;
     
     /** Raw IMU data **/
@@ -73,9 +45,9 @@ namespace imar
 	unsigned int microseconds; /** microseconds between last trigger **/
 	int length; /** Number of the information bytes **/
 // 	unsigned char ibit[8]; /** Init Build in Test (IBIT) information check info **/
-	float acc[NUMAXIS]; /** Accelerometers values **/
-	float gyro[NUMAXIS]; /** Gyros raw values **/
-	float euler[NUMAXIS]; /** Roll, Pitch and Yaw values **/
+	float acc[imar::NUMAXIS]; /** Accelerometers values **/
+	float gyro[imar::NUMAXIS]; /** Gyros raw values **/
+	float euler[imar::NUMAXIS]; /** Roll, Pitch and Yaw values **/
 	UINT16 crc; /** CRC-CCITT **/
     } ImuData;
     
@@ -93,8 +65,8 @@ namespace imar
 	    boost::circular_buffer<float> cbAccX;
 	    boost::circular_buffer<float> cbAccY;
 	    boost::circular_buffer<float> cbAccZ;
-	    Eigen::Matrix <double,NUMAXIS,1> velocity;
-	    Eigen::Matrix <double,NUMAXIS,1> displacement;
+	    Eigen::Matrix <double,imar::NUMAXIS,1> velocity;
+	    Eigen::Matrix <double,imar::NUMAXIS,1> displacement;
 	    
 	public: 
 	    
@@ -129,7 +101,7 @@ namespace imar
 	    * @return OK is everything all right. ERROR on other cases.
 	    *
 	    */
-	    int open_port (const char* name);
+	    bool open_port (const char* name);
 
 	    /**
 	    * @brief This method opens and configures a serial port
@@ -147,7 +119,7 @@ namespace imar
 	    * @return OK is everything all right. ERROR on other cases.
 	    *
 	    */
-	    int init_serial (const char *name, const int bauds);
+	    bool init_serial (const char *name, const int bauds);
 	    
 	    
 	    /**
@@ -163,7 +135,7 @@ namespace imar
 	    * @return OK is everything all right. ERROR on other cases.
 	    *
 	    */
-	    int write_serial(char* command, int nbytes);
+	    bool write_serial(char* command, int nbytes);
 	    
 	    
 	    /**
@@ -179,7 +151,7 @@ namespace imar
 	    * @return OK if everything all right, ERROR on error.
 	    *
 	    */
-	    int read_serial(unsigned char * bufferpr, int nbytes);
+	    bool read_serial(unsigned char * bufferpr, int nbytes);
 
 	    /**
 	    * @brief Function to close an open serial port connection.
@@ -191,7 +163,7 @@ namespace imar
 	    * @return OK if everything all right, ERROR on error.
 	    *
 	    */
-	    int close_port ();
+	    bool close_port ();
 	    
 	    /**
 	    * @brief Returns file decriptor
@@ -238,7 +210,7 @@ namespace imar
 	    * @return true if it is Synchronized false in other cases.
 	    *
 	    */
-	    int cbIsSynchronized();
+            bool cbIsSynchronized();
 	    
 	    
 	    /**
@@ -269,7 +241,7 @@ namespace imar
 	    * @return OK if synchronization makes success. ERROR in other cases.
 	    *
 	    */
-	    int cbSynchronize ();
+	    bool cbSynchronize ();
 	    
 	    /**
 	    * @brief It reads a information from the circular buffer
@@ -284,7 +256,7 @@ namespace imar
 	    * @return OK if everything is good, ERROR in other cases.
 	    *
 	    */
-	    int cbCopyPckg(unsigned char *pckg, int len);
+	    bool cbCopyPckg(unsigned char *pckg, int len);
 	    
 	    /**
 	    * @brief It reads a IMU packages
@@ -299,7 +271,7 @@ namespace imar
 	    * @return OK if everything is good, ERROR in other cases.
 	    *
 	    */
-	    int cbReadValues();
+	    bool cbReadValues();
 	    
 	    /**
 	    * @brief It prints the values stored in ImuData
@@ -339,7 +311,7 @@ namespace imar
 	    * @return The Accelerometers.
 	    *
 	    */
-	    Eigen::Matrix <double,NUMAXIS,1> getAccelerometers();
+	    Eigen::Matrix <double,imar::NUMAXIS,1> getAccelerometers();
 	    
 	    /**
 	    * @brief It gets the Gyroscopes values.
@@ -349,7 +321,7 @@ namespace imar
 	    * @return The Gyroscopes
 	    *
 	    */
-	    Eigen::Matrix <double,NUMAXIS,1> getGyroscopes();
+	    Eigen::Matrix <double,imar::NUMAXIS,1> getGyroscopes();
 	    
 	    
 	    /**
@@ -365,9 +337,9 @@ namespace imar
 	    
 	    void cbCalculateAccIntegration (const float omega);
 	    
-	    Eigen::Matrix <double,NUMAXIS,1> getVelocity();
+	    Eigen::Matrix <double,imar::NUMAXIS,1> getVelocity();
 	    
-	    Eigen::Matrix <double,NUMAXIS,1> getPosition();
+	    Eigen::Matrix <double,imar::NUMAXIS,1> getPosition();
 	    
 	    unsigned short crc16(unsigned char *data_p, int length);
 	    

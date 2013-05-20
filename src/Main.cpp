@@ -80,14 +80,14 @@ static void generic_handling (int sig)
 * @return OK is everything all right. ERROR on other cases
 *
 */
-int signal_set (int sig,handling_t pfunc,void *values)
+bool signal_set (int sig,handling_t pfunc,void *values)
 {
 
 	htab[sig] = pfunc;
 	data[sig] = values;
 	if ((signal (sig,generic_handling))==SIG_ERR)
-	 return ERROR;
-	return OK;
+	 return false;
+	return true;
 }
 
 
@@ -111,21 +111,21 @@ int signal_set (int sig,handling_t pfunc,void *values)
 * @return OK is everything all right. ERROR in other cases
 *
 */
-int signal_catcher (int sig_1,int sig_2,int sig_3, int sig_4, handling_t pfunc, void *values)
+bool signal_catcher (int sig_1,int sig_2,int sig_3, int sig_4, handling_t pfunc, void *values)
 {
-	int status=OK;
+	bool status=true;
 
 	status=signal_set (sig_1,pfunc,values);
 
-	if (status==OK)
+	if (status)
 
 	status=signal_set (sig_2,pfunc,values);
 
-	if (status==OK)
+	if (status)
 
 	status=signal_set (sig_3,pfunc,values);
 
-	if (status==OK)
+	if (status)
 
 	status=signal_set (sig_4,pfunc,values);
 	
@@ -149,7 +149,7 @@ int signal_catcher (int sig_1,int sig_2,int sig_3, int sig_4, handling_t pfunc, 
  */
 void signal_terminator (int sig, void *values)
 {
-	int status = OK;
+	bool status = true;
 	imar::iVRU_BB * pimar;
 
 	pimar = (imar::iVRU_BB *) values;
@@ -164,7 +164,7 @@ void signal_terminator (int sig, void *values)
 
 
 	
-	if ((status = pimar->close_port()) == OK)
+	if ((status = pimar->close_port()))
 	{
 	    std::cout<<"serial port closed correctly.\n";
 	}
@@ -179,8 +179,8 @@ void signal_terminator (int sig, void *values)
 int main(int argc, char** argv)
 {
 	/****** Variables ******/
-	unsigned char values[PKG_SIZE];
-	unsigned char pckg[PKG_SIZE];
+	unsigned char values[imar::PKG_SIZE];
+	unsigned char pckg[imar::PKG_SIZE];
 	unsigned char sync_word = 0x7E;
 	int byteRead;
 	imar::iVRU_BB imar;
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
 	
 	
 	/** Argv[1] normally is "/dev/ttyUSB0" driver description file on Linux system **/
-	if (imar.init_serial(argv[1], 57600) != ERROR)
+	if (imar.init_serial(argv[1], 57600))
 	{
 	    std::cout<<"OK\n";
 	    
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 		std::cout<<"File Descriptor: "<<imar.getDescriptor()<<"\n";
 		std::cout<<"sizeof(values): "<<std::dec<<sizeof(values)<<"\n";
 		
-		if ((byteRead = imar.read_serial(values, sizeof(values))) != ERROR)
+		if ((byteRead = imar.read_serial(values, sizeof(values))))
 		{
 		    std::cout<<"byteRead: "<<byteRead<<"\n";
 		    
@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 			if (!imar.cbIsSynchronized()) 
 			{
 			    /**Synchronize with the starting byte**/
-			    if (imar.cbSynchronize() == OK)
+			    if (imar.cbSynchronize())
 			    {
 				std::cout<<"Synchronized!!!\n";
 			    }
