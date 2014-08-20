@@ -180,7 +180,6 @@ int main(int argc, char** argv)
 {
 	/****** Variables ******/
 	unsigned char values[imar::PKG_SIZE];
-	unsigned char pckg[imar::PKG_SIZE];
 	unsigned char sync_word = 0x7E;
 	int byteRead;
 	imar::iVRU_BB imar;

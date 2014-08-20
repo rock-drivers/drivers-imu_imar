@@ -356,8 +356,7 @@ namespace imar
     bool iVRU_BB::cbSynchronize ()
     {
 	int sync = myBuffer.read;
-	UINT16 length;
-	int ilength;
+	//UINT16 length;
 	
 	if (!iVRU_BB::cbIsEmpty())
 	{
@@ -398,10 +397,10 @@ namespace imar
 			/** The app must read new values again **/
 			myBuffer.read = (sync+imar::PKG_SIZE)%myBuffer.size;
 			
-			length.data[1] = myBuffer.data[(sync+2)%myBuffer.size];
-			length.data[0] = myBuffer.data[(sync+3)%myBuffer.size];
-			ilength = (length.data[0] << 8)|(0x00FF & length.data[1]);
-			
+			//length.data[1] = myBuffer.data[(sync+2)%myBuffer.size];
+			//length.data[0] = myBuffer.data[(sync+3)%myBuffer.size];
+
+	                //int ilength = (length.data[0] << 8)|(0x00FF & length.data[1]);
 // 			std::cout<< "Length: "<< ilength<<"\n";
 // 			printf("%X %X \n", length.data[0], length.data[1]);
 			break;
@@ -761,7 +760,7 @@ namespace imar
     
     unsigned short iVRU_BB::crc16(unsigned char *data_p, int length)
     {
-	unsigned int crc;
+	unsigned int crc = -1;
 
 	// A popular variant complements rem here
 	for(int i=0; i<length; ++i)
