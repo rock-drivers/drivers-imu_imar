@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <imar/imar.hpp>
+#include <imu_imar/Imar.hpp>
 
 /**
 * SIGNAL      ID   DEFAULT  DESCRIPTION
@@ -150,9 +150,9 @@ bool signal_catcher (int sig_1,int sig_2,int sig_3, int sig_4, handling_t pfunc,
 void signal_terminator (int sig, void *values)
 {
 	bool status = true;
-	imar::iVRU_BB * pimar;
+	imu_imar::iVRU_BB * pimu_imar;
 
-	pimar = (imar::iVRU_BB *) values;
+	pimu_imar = (imu_imar::iVRU_BB *) values;
 
 	if (sig == SIGINT)
 		std::cout<< "\nSIGINT: Terminal interrupt\n";
@@ -164,7 +164,7 @@ void signal_terminator (int sig, void *values)
 
 
 	
-	if ((status = pimar->close_port()))
+	if ((status = pimu_imar->close_port()))
 	{
 	    std::cout<<"serial port closed correctly.\n";
 	}
@@ -179,19 +179,19 @@ void signal_terminator (int sig, void *values)
 int main(int argc, char** argv)
 {
 	/****** Variables ******/
-	unsigned char values[imar::PKG_SIZE];
+	unsigned char values[imu_imar::PKG_SIZE];
 	unsigned char sync_word = 0x7E;
 	int byteRead;
-	imar::iVRU_BB imar;
+	imu_imar::iVRU_BB imu_imar;
 	handling_t pfunc;
 	
 	/* Function signal handling */
 	pfunc = signal_terminator;
 	
 	/* Catching system signals */
-	signal_catcher (SIGHUP,SIGINT,SIGTERM, SIGSEGV, pfunc, &imar);
+	signal_catcher (SIGHUP,SIGINT,SIGTERM, SIGSEGV, pfunc, &imu_imar);
 	
-	imar.welcome();
+	imu_imar.welcome();
 	
 	/** Open serial port **/
 	std::cout<<"Connecting to IMU("<<argv[1]<<").......";
@@ -201,19 +201,19 @@ int main(int argc, char** argv)
 	
 	
 	/** Argv[1] normally is "/dev/ttyUSB0" driver description file on Linux system **/
-	if (imar.init_serial(argv[1], 57600))
+	if (imu_imar.init_serial(argv[1], 57600))
 	{
 	    std::cout<<"OK\n";
 	    
-	    if (imar.cbIsEmpty())
+	    if (imu_imar.cbIsEmpty())
 		std::cout<<"Buffer is empty\n";
 	    
 	    while(true)
 	    {
-		std::cout<<"File Descriptor: "<<imar.getDescriptor()<<"\n";
+		std::cout<<"File Descriptor: "<<imu_imar.getDescriptor()<<"\n";
 		std::cout<<"sizeof(values): "<<std::dec<<sizeof(values)<<"\n";
 		
-		if ((byteRead = imar.read_serial(values, sizeof(values))))
+		if ((byteRead = imu_imar.read_serial(values, sizeof(values))))
 		{
 		    std::cout<<"byteRead: "<<byteRead<<"\n";
 		    
@@ -239,26 +239,26 @@ int main(int argc, char** argv)
 		    }
 		    
 		    /** Store the read values in the Circular Buffer **/
-		    imar.cbWritePckg (byteRead, values);
+		    imu_imar.cbWritePckg (byteRead, values);
 		    std::cout<<"Writen "<<byteRead<<" bytes in Circular Buffer\n";
 
-		    if (imar.cbIsFull())
+		    if (imu_imar.cbIsFull())
 		    {
 			std::cout<<"Circular Buffer full\n";
 			
-			if (!imar.cbIsSynchronized()) 
+			if (!imu_imar.cbIsSynchronized()) 
 			{
 			    /**Synchronize with the starting byte**/
-			    if (imar.cbSynchronize())
+			    if (imu_imar.cbSynchronize())
 			    {
 				std::cout<<"Synchronized!!!\n";
 			    }
 			}
 		    }
-		    else if (imar.cbIsSynchronized()) 
+		    else if (imu_imar.cbIsSynchronized()) 
 		    {
-			imar.cbReadValues();
-			imar.cbPrintValues();
+			imu_imar.cbReadValues();
+			imu_imar.cbPrintValues();
 		    }
 		}
 		else
@@ -268,7 +268,7 @@ int main(int argc, char** argv)
 	    
  		usleep (10000);//it is set at 100Hz. 0.01 second which are 10000microseconds
 	    }
-	    imar.close_port();
+	    imu_imar.close_port();
 	}
 	return 0;
 }

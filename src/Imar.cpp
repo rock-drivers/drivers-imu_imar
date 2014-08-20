@@ -1,4 +1,4 @@
-/**\file imar.cpp
+/**\file Imar.cpp
  *
  * This class has the primitive methods for the IMAR IMU driver 
  * model iVRU-BB. Methods provide the basic for managing the
@@ -27,7 +27,7 @@
 #include <termios.h> /**< POSIX terminal control definitions */
 #include <math.h> /** Math includes **/
 #include <stdint.h>
-#include "imar.hpp"
+#include "Imar.hpp"
 
 #ifndef D2R
 #define D2R M_PI/180.00 /** Convert degree to radian **/
@@ -38,7 +38,7 @@
 #endif
 
 
-namespace imar
+namespace imu_imar
 {
     union IntFloat
     {
@@ -56,7 +56,7 @@ namespace imar
 	myBuffer.write = 0;
 	myBuffer.read = 0;
 	
-	cbAccX.set_capacity(imar::FFT_WINDOWS_SIZE);
+	cbAccX.set_capacity(imu_imar::FFT_WINDOWS_SIZE);
 
     }
     
@@ -370,7 +370,7 @@ namespace imar
 		
 		sync = (sync + 1) % myBuffer.size;
 			
-		if (myBuffer.data[sync] == imar::SYNC_WORD)
+		if (myBuffer.data[sync] == imu_imar::SYNC_WORD)
 		{
 /*		    std::cout<<"FOUND at ("<<std::dec<<sync<<")";
 		    printf("%X \n", myBuffer.data[sync]);
@@ -382,20 +382,20 @@ namespace imar
 /*		    std::cout<<"Counter+1: ";
 		    printf("%X \n",  myBuffer.counter+1);
 		    
-		    std::cout<<"Next Synchronize at ("<<std::dec<<(sync+imar::PKG_SIZE)%myBuffer.size<<")";
-		    printf("%X \n", myBuffer.data[(sync+imar::PKG_SIZE)%myBuffer.size]);
+		    std::cout<<"Next Synchronize at ("<<std::dec<<(sync+imu_imar::PKG_SIZE)%myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+imu_imar::PKG_SIZE)%myBuffer.size]);
 		    
-		    std::cout<<"Counter+1("<<std::dec<<(sync+imar::PKG_SIZE+1)%myBuffer.size<<")";
-		    printf("%X \n", myBuffer.data[(sync+imar::PKG_SIZE+1)%myBuffer.size]);
+		    std::cout<<"Counter+1("<<std::dec<<(sync+imu_imar::PKG_SIZE+1)%myBuffer.size<<")";
+		    printf("%X \n", myBuffer.data[(sync+imu_imar::PKG_SIZE+1)%myBuffer.size]);
 		    printf("It should be: %X \n", myBuffer.counter + 1);*/
 		    
-		    if ((myBuffer.data[(sync+imar::PKG_SIZE+1)%myBuffer.size]) == myBuffer.counter + 1)
+		    if ((myBuffer.data[(sync+imu_imar::PKG_SIZE+1)%myBuffer.size]) == myBuffer.counter + 1)
 		    {
 			myBuffer.synchronized = true;
 			
 			/** Jump one package ahead to be fully sync**/
 			/** The app must read new values again **/
-			myBuffer.read = (sync+imar::PKG_SIZE)%myBuffer.size;
+			myBuffer.read = (sync+imu_imar::PKG_SIZE)%myBuffer.size;
 			
 			//length.data[1] = myBuffer.data[(sync+2)%myBuffer.size];
 			//length.data[0] = myBuffer.data[(sync+3)%myBuffer.size];
@@ -612,11 +612,11 @@ namespace imar
 // 	    val.i = (0x3f << 24 )|(0x00FF0000 & 0x9d << 16)|(0x0000FF00 & 0x70 << 8)|(0x000000FF & 0xa4);
 // 	    printf("Union %f\n", val.f);
 	    	    
-	    myBuffer.read = (myBuffer.read+imar::PKG_SIZE)%myBuffer.size;
+	    myBuffer.read = (myBuffer.read+imu_imar::PKG_SIZE)%myBuffer.size;
 // 	    printf("Next->SyncWord (%d): %X\n", (myBuffer.read)%myBuffer.size, myBuffer.data[(myBuffer.read)%myBuffer.size]);
 	    
 	    /** Check if the buffer is Synchronize **/
-	    if (myBuffer.data[myBuffer.read] !=  imar::SYNC_WORD)
+	    if (myBuffer.data[myBuffer.read] !=  imu_imar::SYNC_WORD)
 		myBuffer.synchronized = false;
 	    
 	  
@@ -640,9 +640,9 @@ namespace imar
 	std::cout<<"Roll: "<<myIMU.euler[0]<<" Pitch: "<<myIMU.euler[1]<<" Yaw: "<<myIMU.euler[2]<<"\n";
     }
     
-    Eigen::Matrix< double, imar::NUMAXIS , 1  > iVRU_BB::getAccelerometers()
+    Eigen::Matrix< double, imu_imar::NUMAXIS , 1  > iVRU_BB::getAccelerometers()
     {
-	Eigen::Matrix< double, imar::NUMAXIS , 1  > acc;
+	Eigen::Matrix< double, imu_imar::NUMAXIS , 1  > acc;
 	
 	acc[0] = myIMU.acc[0];
 	acc[1] = myIMU.acc[1];
@@ -652,9 +652,9 @@ namespace imar
 
     }
 
-    Eigen::Matrix< double, imar::NUMAXIS , 1  > iVRU_BB::getGyroscopes()
+    Eigen::Matrix< double, imu_imar::NUMAXIS , 1  > iVRU_BB::getGyroscopes()
     {
-	Eigen::Matrix< double, imar::NUMAXIS , 1  > gyro;
+	Eigen::Matrix< double, imu_imar::NUMAXIS , 1  > gyro;
 	
 	gyro[0] = myIMU.gyro[0];
 	gyro[1] = myIMU.gyro[1];
@@ -690,18 +690,18 @@ namespace imar
 	std::vector<std::complex<float> > freqvecVel;
 	std::vector<std::complex<float> > freqvecPos;
 	
-	timevec.resize(imar::FFT_WINDOWS_SIZE);
-	timevecVel.resize(imar::FFT_WINDOWS_SIZE);
-	timevecPos.resize(imar::FFT_WINDOWS_SIZE);
-	freqvecPos.resize(imar::FFT_WINDOWS_SIZE);
-	freqvecVel.resize(imar::FFT_WINDOWS_SIZE);
+	timevec.resize(imu_imar::FFT_WINDOWS_SIZE);
+	timevecVel.resize(imu_imar::FFT_WINDOWS_SIZE);
+	timevecPos.resize(imu_imar::FFT_WINDOWS_SIZE);
+	freqvecPos.resize(imu_imar::FFT_WINDOWS_SIZE);
+	freqvecVel.resize(imu_imar::FFT_WINDOWS_SIZE);
 	
 // 	std::cout<<"cbAccX.size(): "<<cbAccX.size()<<"\n";
 	
-	if (cbAccX.size() == imar::FFT_WINDOWS_SIZE)
+	if (cbAccX.size() == imu_imar::FFT_WINDOWS_SIZE)
 	{
 	    /** Get the Acceleration **/
-	    for (int i=0; i<imar::FFT_WINDOWS_SIZE; ++i)
+	    for (int i=0; i<imu_imar::FFT_WINDOWS_SIZE; ++i)
 	    {
 		timevec[i] = cbAccX[i];
 // 		std::cout<<"Acceleration["<<i<<"]: "<<timevec[i]<<"\n";
@@ -717,7 +717,7 @@ namespace imar
 	    fft.fwd(freqvecPos,timevec);
 	    
 	
-	    for (int i=0; i<imar::FFT_WINDOWS_SIZE; ++i)
+	    for (int i=0; i<imu_imar::FFT_WINDOWS_SIZE; ++i)
 	    {
 // 		std::cout<<"Freq["<<i<<"]: "<<freqvecVel[i]<<"\n";
 		
@@ -773,7 +773,7 @@ namespace imar
 		if (crc & 0x0001)
 		{
 		    // if rightmost (least significant) bit is set
-		    crc = (crc >> 1) ^ imar::POLY;
+		    crc = (crc >> 1) ^ imu_imar::POLY;
 		    
 		}
 		else

@@ -1,4 +1,4 @@
-/**\file imar.hpp
+/**\file Imar.hpp
  * Header function file and defines
  */
 
@@ -11,7 +11,7 @@
 #include <boost/circular_buffer.hpp> /** Boost library circula buffer **/
 
 
-namespace imar
+namespace imu_imar
 {
    
     enum CONSTS {
@@ -36,7 +36,7 @@ namespace imar
 	int size;   /** maximum number of elements*/
 	int read;  /** index of read element */
 	int write;    /** index at which to write new element*/
-	unsigned char data[(2*imar::PKG_SIZE) + 1];  /* vector of elements */
+	unsigned char data[(2*imu_imar::PKG_SIZE) + 1];  /* vector of elements */
     } CircularBuffer;
     
     /** Raw IMU data **/
@@ -45,9 +45,9 @@ namespace imar
 	unsigned int microseconds; /** microseconds between last trigger **/
 	int length; /** Number of the information bytes **/
 // 	unsigned char ibit[8]; /** Init Build in Test (IBIT) information check info **/
-	float acc[imar::NUMAXIS]; /** Accelerometers values **/
-	float gyro[imar::NUMAXIS]; /** Gyros raw values **/
-	float euler[imar::NUMAXIS]; /** Roll, Pitch and Yaw values **/
+	float acc[imu_imar::NUMAXIS]; /** Accelerometers values **/
+	float gyro[imu_imar::NUMAXIS]; /** Gyros raw values **/
+	float euler[imu_imar::NUMAXIS]; /** Roll, Pitch and Yaw values **/
 	UINT16 crc; /** CRC-CCITT **/
     } ImuData;
     
@@ -65,8 +65,8 @@ namespace imar
 	    boost::circular_buffer<float> cbAccX;
 	    boost::circular_buffer<float> cbAccY;
 	    boost::circular_buffer<float> cbAccZ;
-	    Eigen::Matrix <double,imar::NUMAXIS,1> velocity;
-	    Eigen::Matrix <double,imar::NUMAXIS,1> displacement;
+	    Eigen::Matrix <double,imu_imar::NUMAXIS,1> velocity;
+	    Eigen::Matrix <double,imu_imar::NUMAXIS,1> displacement;
 	    
 	public: 
 	    
@@ -311,7 +311,7 @@ namespace imar
 	    * @return The Accelerometers.
 	    *
 	    */
-	    Eigen::Matrix <double,imar::NUMAXIS,1> getAccelerometers();
+	    Eigen::Matrix <double,imu_imar::NUMAXIS,1> getAccelerometers();
 	    
 	    /**
 	    * @brief It gets the Gyroscopes values.
@@ -321,7 +321,7 @@ namespace imar
 	    * @return The Gyroscopes
 	    *
 	    */
-	    Eigen::Matrix <double,imar::NUMAXIS,1> getGyroscopes();
+	    Eigen::Matrix <double,imu_imar::NUMAXIS,1> getGyroscopes();
 	    
 	    
 	    /**
@@ -337,9 +337,9 @@ namespace imar
 	    
 	    void cbCalculateAccIntegration (const float omega);
 	    
-	    Eigen::Matrix <double,imar::NUMAXIS,1> getVelocity();
+	    Eigen::Matrix <double,imu_imar::NUMAXIS,1> getVelocity();
 	    
-	    Eigen::Matrix <double,imar::NUMAXIS,1> getPosition();
+	    Eigen::Matrix <double,imu_imar::NUMAXIS,1> getPosition();
 	    
 	    unsigned short crc16(unsigned char *data_p, int length);
 	    
